@@ -449,8 +449,8 @@ class SynthesisNetwork(torch.nn.Module):
             is_last = (res == self.img_resolution)
             block = SynthesisBlock(in_channels, out_channels, w_dim=w_dim, resolution=res,
                 img_channels=img_channels, is_last=is_last, use_fp16=use_fp16, **block_kwargs)
-            self.num_ws += block.num_conv
-            if is_last:
+            self.num_ws += block.num_conv 
+            if is_last or block.architecture == 'skip':
                 self.num_ws += block.num_torgb
             setattr(self, f'b{res}', block)
 
@@ -463,7 +463,7 @@ class SynthesisNetwork(torch.nn.Module):
             for res in self.block_resolutions:
                 block = getattr(self, f'b{res}')
                 block_ws.append(ws.narrow(1, w_idx, block.num_conv + block.num_torgb))
-                w_idx += block.num_conv
+                w_idx += block.num_conv + block.num_torgb
 
         x = img = None
         for res, cur_ws in zip(self.block_resolutions, block_ws):
